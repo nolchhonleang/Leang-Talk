@@ -1,0 +1,29 @@
+{
+  "name": "leang-talk",
+  "version": "1.0.0",
+  "description": "A modern video chat application with real-time avatar customization and face tracking",
+  "author": "Nol Chhonleang",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.3",
+    "framer-motion": "^11.0.0",
+    "zustand": "4.4.7",
+    "clsx": "2.0.0",
+    "tailwind-merge": "2.1.0",
+    "react-dom": "^19.2.3",
+    "@heroicons/react": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
