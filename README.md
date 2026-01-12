@@ -167,11 +167,6 @@ A: Make sure you're in a well-lit environment and your face is clearly visible.
 **Q: Build fails?**
 A: Try clearing the node_modules folder and reinstalling dependencies.
 
-### Getting Help
-
-- 📧 **Email**: support@leangtalk.com
-- 💬 **Discord**: [Join our community](https://discord.gg/leangtalk)
-- 🐛 **Issues**: [Report on GitHub](https://github.com/nolchhonleang/leang-talk/issues)
 
 ## 📄 License
 
@@ -194,5 +189,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 [![GitHub stars](https://img.shields.io/github/stars/nolchhonleang/leang-talk?style=social)](https://github.com/nolchhonleang/leang-talk)
 
 </div>
-![alt text](image.png)
-![alt text](image-1.png)
+<img width="1918" height="1011" alt="image" src="https://github.com/user-attachments/assets/e75f7a2d-5d20-415c-a349-7cbb251d12af" />
+<img width="1917" height="1015" alt="image" src="https://github.com/user-attachments/assets/8cda8c46-dec4-431e-aba2-3a294035132f" />
+
