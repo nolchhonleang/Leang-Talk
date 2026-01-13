@@ -5,6 +5,7 @@ import { useWebRTCSignaling } from './useWebRTCSignaling';
 interface UseWebRTCOptions {
   onPeerJoin?: (name: string) => void;
   onMessage?: (msg: ChatMessage) => void;
+  onMeetingRequest?: (requesterId: string, requesterName: string, accept: () => void, reject: () => void) => void;
 }
 
 export const useWebRTC = (
@@ -105,6 +106,60 @@ export const useWebRTC = (
           });
       }
 
+      if (msg.type === 'meeting-request') {
+        console.log('📬 Meeting request received from:', msg.payload.requesterName);
+        
+        if (options.onMeetingRequest) {
+          options.onMeetingRequest(
+            msg.payload.requesterId,
+            msg.payload.requesterName,
+            () => {
+              // Accept meeting
+              sendMessage({
+                type: 'meeting-accept',
+                senderId: user.id,
+                targetId: msg.payload.requesterId,
+                payload: { 
+                  accepterId: user.id,
+                  accepterName: user.displayName
+                }
+              });
+            },
+            () => {
+              // Reject meeting
+              sendMessage({
+                type: 'meeting-reject',
+                senderId: user.id,
+                targetId: msg.payload.requesterId,
+                payload: { 
+                  rejecterId: user.id,
+                  rejecterName: user.displayName
+                }
+              });
+            }
+          );
+        }
+      }
+
+      if (msg.type === 'meeting-accept') {
+        console.log('✅ Meeting request accepted by:', msg.payload.accepterName);
+        // The accepter will send a join message, so we just wait for that
+      }
+
+      if (msg.type === 'meeting-reject') {
+        console.log('❌ Meeting request rejected by:', msg.payload.rejecterName);
+        // Show notification to user that request was rejected
+        if (options.onMessage) {
+          options.onMessage({
+            id: Math.random().toString(36),
+            senderId: 'system',
+            senderName: 'System',
+            text: `Your meeting request was rejected by ${msg.payload.rejecterName}`,
+            timestamp: Date.now()
+          });
+        }
+      }
+
       if (msg.type === 'leave') {
         setPeers(prev => prev.filter(p => p.id !== msg.senderId));
         peerConnections.current.get(msg.senderId)?.close();
@@ -162,6 +217,19 @@ export const useWebRTC = (
       };
       setChatMessages(prev => [...prev, msg]);
       sendMessage({ type: 'chat', senderId: user.id, payload: msg });
+  };
+
+  const requestToJoinMeeting = (targetUserId: string) => {
+    console.log('📬 Requesting to join meeting with user:', targetUserId);
+    sendMessage({
+      type: 'meeting-request',
+      senderId: user.id,
+      targetId: targetUserId,
+      payload: {
+        requesterId: user.id,
+        requesterName: user.displayName
+      }
+    });
   };
 
   const sendReaction = (emoji: string) => {
@@ -376,5 +444,5 @@ export const useWebRTC = (
     }
   }, [localStream]);
 
-  return { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare };
+  return { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare, requestToJoinMeeting };
 };

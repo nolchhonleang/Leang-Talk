@@ -91,7 +91,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
     };
     
-    const { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare } = useWebRTC(
+    const { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare, requestToJoinMeeting } = useWebRTC(
         roomId!, 
         user!, 
         localStream,
@@ -104,6 +104,15 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
                 if (!showChat) {
                     chatAudioRef.current.play().catch(() => {});
                     addToast(`Msg: ${msg.senderName}`, 'chat');
+                }
+            },
+            onMeetingRequest: (requesterId: string, requesterName: string, accept: () => void, reject: () => void) => {
+                // Show meeting request dialog
+                const shouldAccept = window.confirm(`${requesterName} wants to join your meeting. Accept?`);
+                if (shouldAccept) {
+                    accept();
+                } else {
+                    reject();
                 }
             }
         }
@@ -401,6 +410,13 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
                              {peers.filter(p => p.id !== focusedId).map(peer => (
                                  <div key={peer.id} className="min-w-[160px] md:w-full flex-shrink-0 aspect-video rounded-xl overflow-hidden shadow-md ring-1 ring-black/5 dark:ring-white/10">
                                     <VideoTile name={peer.displayName} stream={peer.stream} isMuted={peer.isMuted} isScreenSharing={peer.isScreenSharing} onClick={() => setFocusedId(peer.id)} />
+                                    <button
+                                        onClick={() => requestToJoinMeeting(peer.id)}
+                                        className="absolute top-2 right-2 bg-brand-500 text-white p-1.5 rounded-full text-xs hover:bg-brand-600 transition-colors shadow-lg"
+                                        title="Request to join this user's meeting"
+                                    >
+                                        <UserPlusIcon className="w-3 h-3" />
+                                    </button>
                                  </div>
                              ))}
                          </div>

@@ -51,7 +51,7 @@ export interface PeerData {
 }
 
 // Signaling Types
-export type SignalType = 'join' | 'offer' | 'answer' | 'ice-candidate' | 'leave' | 'update-state' | 'chat' | 'reaction';
+export type SignalType = 'join' | 'leave' | 'offer' | 'answer' | 'ice-candidate' | 'chat' | 'reaction' | 'update-state' | 'meeting-request' | 'meeting-accept' | 'meeting-reject';
 
 export interface SignalMessage {
   type: SignalType;
