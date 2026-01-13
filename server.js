@@ -73,7 +73,7 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Leang Talk Server started successfully!`);
     console.log(`📡 WebSocket server running on port ${PORT}`);
-    console.log(`🌐 Ready for cross-device video calls like meeting!`);
+    console.log(`🌐 Ready for cross-device video calls`);
     console.log(`🔗 Local URL: http://localhost:${PORT}`);
     console.log(`📱 Users can now join meetings from anywhere on the internet!`);
 });
