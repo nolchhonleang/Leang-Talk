@@ -245,14 +245,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Team** - For inspiring the video chat experience
 - **Render Team** - For providing excellent deployment platform
 
-## 📞 Support
-
-If you have any questions or need help:
-
-- 📧 **Email:** [nolchhonleang@example.com](mailto:nolchhonleang@example.com)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/nolchhonleang/leang-talk/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/nolchhonleang/leang-talk/discussions)
-
 ---
 
 <div align="center">
