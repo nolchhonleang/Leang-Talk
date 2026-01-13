@@ -14,8 +14,6 @@ export default defineConfig({
       },
     },
   },
-  root: '.', // Important: specify root directory
-  publicDir: false, // We'll handle static files ourselves
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),

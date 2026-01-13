@@ -87,11 +87,14 @@ export const useWebRTC = (
           if (msg.targetId && msg.targetId !== user.id) return;
 
           const peerInfo: Partial<PeerData> = msg.payload;
+          console.log('🔄 Received update-state for peer:', peerInfo.id, peerInfo);
+          
           setPeers(prev => {
              const idx = prev.findIndex(p => p.id === peerInfo.id);
              if (idx >= 0) {
                  const updated = [...prev];
                  updated[idx] = { ...updated[idx], ...peerInfo, stream: peerStreams.current.get(peerInfo.id!) };
+                 console.log('✅ Updated peer info for:', peerInfo.id, 'has stream:', !!peerStreams.current.get(peerInfo.id!));
                  return updated;
              }
              return [...prev, peerInfo as PeerData];
@@ -109,18 +112,23 @@ export const useWebRTC = (
         const pc = peerConnections.current.get(msg.senderId) || createPeerConnection(msg.senderId, false);
 
         if (msg.type === 'offer' && pc) {
-          pc.setRemoteDescription(new RTCSessionDescription(msg.payload)).then(() => {
-            return pc.createAnswer();
-          }).then(answer => {
-            return pc.setLocalDescription(answer);
-          }).then(() => {
-            sendMessageRef.current?.({
-              type: 'answer',
-              senderId: user.id,
-              targetId: msg.senderId,
-              payload: answer
+          pc.setRemoteDescription(new RTCSessionDescription(msg.payload))
+            .then(() => pc.createAnswer())
+            .then(answer => pc.setLocalDescription(answer))
+            .then(() => {
+              const localDesc = pc.localDescription;
+              if (localDesc) {
+                sendMessageRef.current?.({
+                  type: 'answer',
+                  senderId: user.id,
+                  targetId: msg.senderId,
+                  payload: localDesc
+                });
+              }
+            })
+            .catch(error => {
+              console.error('Error handling offer:', error);
             });
-          });
         } else if (msg.type === 'answer' && pc) {
           pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
         } else if (msg.type === 'ice-candidate' && pc) {
@@ -332,6 +340,24 @@ export const useWebRTC = (
                 pc.addTrack(track, localStream);
             }
         });
+        
+        // Force renegotiation to ensure stream is sent
+        if (pc.signalingState === 'stable') {
+          console.log('🔄 Creating offer to send updated stream to:', peerId);
+          pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+              sendMessageRef.current?.({
+                type: 'offer',
+                senderId: user.id,
+                targetId: peerId,
+                payload: pc.localDescription
+              });
+            })
+            .catch(error => {
+              console.error('Error creating offer for stream update:', error);
+            });
+        }
       });
     }
   }, [localStream]);
