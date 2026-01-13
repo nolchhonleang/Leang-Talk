@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { PeerData, SignalMessage, AvatarConfig, ChatMessage, Reaction } from '../types';
-
-const CHANNEL_NAME = 'leang-talk-signaling-v2';
+import { useWebRTCSignaling } from './useWebRTCSignaling';
 
 interface UseWebRTCOptions {
   onPeerJoin?: (name: string) => void;
@@ -18,10 +17,10 @@ export const useWebRTC = (
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   
-  const channelRef = useRef<BroadcastChannel | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const peerStreams = useRef<Map<string, MediaStream>>(new Map());
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
+  const sendMessageRef = useRef<(msg: SignalMessage) => void>();
 
   // STUN config for real connectivity
   const rtcConfig = {
@@ -32,9 +31,106 @@ export const useWebRTC = (
 
   // --- Signaling Functions ---
 
-  const sendMessage = (msg: SignalMessage) => {
-      channelRef.current?.postMessage(msg);
-  };
+  // Handle incoming signaling messages
+  const handleSignalingMessage = useCallback((msg: SignalMessage) => {
+      if (msg.senderId === user.id) return;
+      
+      if (msg.type === 'chat') {
+          setChatMessages(prev => [...prev, msg.payload]);
+          if(options.onMessage) options.onMessage(msg.payload);
+          return;
+      }
+      
+      if (msg.type === 'reaction') {
+          setReactions(prev => [...prev, msg.payload]);
+          setTimeout(() => setReactions(prev => prev.filter(r => r.id !== msg.payload.id)), 3000);
+          return;
+      }
+
+      if (msg.type === 'join') {
+        const newPeer: PeerData = msg.payload;
+        
+        // Trigger Join Sound/Notification
+        if (options.onPeerJoin) options.onPeerJoin(newPeer.displayName);
+
+        setPeers(prev => {
+          if (prev.find(p => p.id === newPeer.id)) return prev;
+          return [...prev, newPeer];
+        });
+
+        sendMessageRef.current?.({
+          type: 'update-state',
+          senderId: user.id,
+          targetId: newPeer.id,
+          payload: { 
+              id: user.id, 
+              displayName: user.displayName, 
+              avatarConfig: user.avatarConfig, 
+              isMuted: false, 
+              isCameraOff: false,
+              isScreenSharing: !!screenTrackRef.current 
+          }
+        });
+
+        createPeerConnection(newPeer.id, true);
+      }
+
+      if (msg.type === 'update-state') {
+          if (msg.targetId && msg.targetId !== user.id) return;
+
+          const peerInfo: Partial<PeerData> = msg.payload;
+          setPeers(prev => {
+             const idx = prev.findIndex(p => p.id === peerInfo.id);
+             if (idx >= 0) {
+                 const updated = [...prev];
+                 updated[idx] = { ...updated[idx], ...peerInfo, stream: peerStreams.current.get(peerInfo.id!) };
+                 return updated;
+             }
+             return [...prev, peerInfo as PeerData];
+          });
+      }
+
+      if (msg.type === 'leave') {
+        setPeers(prev => prev.filter(p => p.id !== msg.senderId));
+        peerConnections.current.get(msg.senderId)?.close();
+        peerConnections.current.delete(msg.senderId);
+        peerStreams.current.delete(msg.senderId);
+      }
+
+      if (msg.targetId === user.id) {
+        const pc = peerConnections.current.get(msg.senderId) || createPeerConnection(msg.senderId, false);
+
+        if (msg.type === 'offer' && pc) {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.payload)).then(() => {
+            return pc.createAnswer();
+          }).then(answer => {
+            return pc.setLocalDescription(answer);
+          }).then(() => {
+            sendMessageRef.current?.({
+              type: 'answer',
+              senderId: user.id,
+              targetId: msg.senderId,
+              payload: answer
+            });
+          });
+        } else if (msg.type === 'answer' && pc) {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+        } else if (msg.type === 'ice-candidate' && pc) {
+          pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+        }
+      }
+  }, [user.id, options]);
+
+  const { isConnected, sendMessage } = useWebRTCSignaling({ 
+    roomId, 
+    userId: user.id,
+    onMessage: handleSignalingMessage 
+  });
+
+  // Update the sendMessage ref
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
 
   const sendChat = (text: string) => {
       const msg: ChatMessage = {
@@ -95,18 +191,19 @@ export const useWebRTC = (
 
     if (initiator) {
       pc.createOffer().then(offer => {
-        pc.setLocalDescription(offer);
+        return pc.setLocalDescription(offer);
+      }).then(() => {
         sendMessage({
           type: 'offer',
           senderId: user.id,
           targetId: targetPeerId,
-          payload: offer
+          payload: pc.localDescription
         });
       });
     }
 
     return pc;
-  }, [localStream, user.id]);
+  }, [localStream, user.id, sendMessage]);
 
   // --- Screen Share Logic ---
 
@@ -174,97 +271,9 @@ export const useWebRTC = (
   // --- Main Effect ---
 
   useEffect(() => {
-    const bc = new BroadcastChannel(CHANNEL_NAME);
-    channelRef.current = bc;
+    if (!isConnected) return;
 
-    bc.onmessage = async (event) => {
-      const msg = event.data as SignalMessage;
-      
-      if (msg.senderId === user.id) return;
-      
-      if (msg.type === 'chat') {
-          setChatMessages(prev => [...prev, msg.payload]);
-          if(options.onMessage) options.onMessage(msg.payload);
-          return;
-      }
-      
-      if (msg.type === 'reaction') {
-          setReactions(prev => [...prev, msg.payload]);
-          setTimeout(() => setReactions(prev => prev.filter(r => r.id !== msg.payload.id)), 3000);
-          return;
-      }
-
-      if (msg.type === 'join') {
-        const newPeer: PeerData = msg.payload;
-        
-        // Trigger Join Sound/Notification
-        if (options.onPeerJoin) options.onPeerJoin(newPeer.displayName);
-
-        setPeers(prev => {
-          if (prev.find(p => p.id === newPeer.id)) return prev;
-          return [...prev, newPeer];
-        });
-
-        sendMessage({
-          type: 'update-state',
-          senderId: user.id,
-          targetId: newPeer.id,
-          payload: { 
-              id: user.id, 
-              displayName: user.displayName, 
-              avatarConfig: user.avatarConfig, 
-              isMuted: false, 
-              isCameraOff: false,
-              isScreenSharing: !!screenTrackRef.current 
-          }
-        });
-
-        createPeerConnection(newPeer.id, true);
-      }
-
-      if (msg.type === 'update-state') {
-          if (msg.targetId && msg.targetId !== user.id) return;
-
-          const peerInfo: Partial<PeerData> = msg.payload;
-          setPeers(prev => {
-             const idx = prev.findIndex(p => p.id === peerInfo.id);
-             if (idx >= 0) {
-                 const updated = [...prev];
-                 updated[idx] = { ...updated[idx], ...peerInfo, stream: peerStreams.current.get(peerInfo.id!) };
-                 return updated;
-             }
-             return [...prev, peerInfo as PeerData];
-          });
-      }
-
-      if (msg.type === 'leave') {
-        setPeers(prev => prev.filter(p => p.id !== msg.senderId));
-        peerConnections.current.get(msg.senderId)?.close();
-        peerConnections.current.delete(msg.senderId);
-        peerStreams.current.delete(msg.senderId);
-      }
-
-      if (msg.targetId === user.id) {
-        const pc = peerConnections.current.get(msg.senderId) || createPeerConnection(msg.senderId, false);
-
-        if (msg.type === 'offer' && pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          sendMessage({
-            type: 'answer',
-            senderId: user.id,
-            targetId: msg.senderId,
-            payload: answer
-          });
-        } else if (msg.type === 'answer' && pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-        } else if (msg.type === 'ice-candidate' && pc) {
-          await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
-        }
-      }
-    };
-
+    // Send join message when connected
     sendMessage({
       type: 'join',
       senderId: user.id,
@@ -280,10 +289,9 @@ export const useWebRTC = (
 
     return () => {
       sendMessage({ type: 'leave', senderId: user.id });
-      bc.close();
       peerConnections.current.forEach(pc => pc.close());
     };
-  }, [user.id, createPeerConnection]);
+  }, [isConnected, user.id, sendMessage]);
 
   // Handle local stream updates (Avatar only)
   useEffect(() => {

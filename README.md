@@ -69,7 +69,41 @@
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build locally |
 
-## 🏗️ Project Structure
+## � Deployment
+
+### Development (Local)
+```bash
+npm install
+npm start
+```
+This runs both the WebSocket server (port 3001) and Vite dev server (port 3000)
+
+### Static Deployment (GitHub Pages, Netlify, Vercel)
+
+**Important Note:** Static hosting services don't support WebSocket servers, so multi-user functionality requires a signaling server.
+
+#### Option 1: Deploy Signaling Server Separately
+1. Deploy the WebSocket server to Render/Heroku:
+   ```bash
+   # Deploy server.js to a service that supports Node.js
+   # Update the WebSocket URL in useWebRTCSignaling.ts
+   ```
+
+#### Option 2: Use Fallback Mode (Limited)
+The app automatically falls back to localStorage-based signaling for static deployments, which works for:
+- ✅ Same browser, multiple tabs
+- ❌ Different devices/users over the internet
+
+#### Option 3: Full Production Setup
+For full multi-user functionality, deploy both:
+- **Frontend:** Vercel/Netlify/GitHub Pages
+- **Backend:** Render/Heroku/Railway (WebSocket server)
+
+### Environment Variables
+- `NODE_ENV=production` - Enables production mode
+- WebSocket URL is automatically configured based on deployment type
+
+## �🏗️ Project Structure
 
 ```
 leang-talk/
