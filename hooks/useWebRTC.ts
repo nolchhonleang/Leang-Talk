@@ -26,6 +26,10 @@ export const useWebRTC = (
   const rtcConfig = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
     ]
   };
 
@@ -33,6 +37,8 @@ export const useWebRTC = (
 
   // Handle incoming signaling messages
   const handleSignalingMessage = useCallback((msg: SignalMessage) => {
+      console.log('📨 Received signaling message:', msg.type, 'from:', msg.senderId, 'to:', msg.targetId);
+      
       if (msg.senderId === user.id) return;
       
       if (msg.type === 'chat') {
@@ -48,6 +54,7 @@ export const useWebRTC = (
       }
 
       if (msg.type === 'join') {
+        console.log('👋 User joined:', msg.payload.displayName);
         const newPeer: PeerData = msg.payload;
         
         // Trigger Join Sound/Notification
@@ -58,6 +65,7 @@ export const useWebRTC = (
           return [...prev, newPeer];
         });
 
+        console.log('📤 Sending update-state to new peer:', newPeer.id);
         sendMessageRef.current?.({
           type: 'update-state',
           senderId: user.id,
@@ -159,12 +167,24 @@ export const useWebRTC = (
   const createPeerConnection = useCallback((targetPeerId: string, initiator: boolean) => {
     if (peerConnections.current.has(targetPeerId)) return peerConnections.current.get(targetPeerId);
 
+    console.log('🔗 Creating peer connection:', targetPeerId, 'initiator:', initiator);
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnections.current.set(targetPeerId, pc);
 
+    // Add connection state logging
+    pc.onconnectionstatechange = () => {
+      console.log('🔗 Connection state for', targetPeerId, ':', pc.connectionState);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('🧊 ICE connection state for', targetPeerId, ':', pc.iceConnectionState);
+    };
+
     // Add Tracks (Avatar Stream by default)
     if (localStream) {
+      console.log('🎥 Adding local tracks to peer connection:', localStream.getTracks().length);
       localStream.getTracks().forEach(track => {
+        console.log('📡 Adding track:', track.kind, track.label);
         pc.addTrack(track, localStream);
       });
     }
@@ -181,12 +201,15 @@ export const useWebRTC = (
     };
 
     pc.ontrack = (event) => {
+      console.log('🎥 Received track from peer:', event.track.kind, event.streams.length);
       const stream = event.streams[0];
-      peerStreams.current.set(targetPeerId, stream);
-      
-      setPeers(prev => prev.map(p => 
-        p.id === targetPeerId ? { ...p, stream } : p
-      ));
+      if (stream) {
+        peerStreams.current.set(targetPeerId, stream);
+        
+        setPeers(prev => prev.map(p => 
+          p.id === targetPeerId ? { ...p, stream } : p
+        ));
+      }
     };
 
     if (initiator) {
@@ -296,12 +319,17 @@ export const useWebRTC = (
   // Handle local stream updates (Avatar only)
   useEffect(() => {
     if (localStream && !screenTrackRef.current) {
-      peerConnections.current.forEach(pc => {
+      console.log('🔄 Updating local stream for all peers:', localStream.getTracks().length);
+      peerConnections.current.forEach((pc, peerId) => {
         const senders = pc.getSenders();
         localStream.getTracks().forEach(track => {
             const sender = senders.find(s => s.track?.kind === track.kind);
             if (sender) {
+                console.log('🔄 Replacing track for peer:', peerId, track.kind);
                 sender.replaceTrack(track);
+            } else {
+                console.log('➕ Adding new track for peer:', peerId, track.kind);
+                pc.addTrack(track, localStream);
             }
         });
       });
