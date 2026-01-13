@@ -65,22 +65,26 @@ export const useWebRTC = (
           return [...prev, newPeer];
         });
 
-        console.log('📤 Sending update-state to new peer:', newPeer.id);
-        sendMessageRef.current?.({
-          type: 'update-state',
-          senderId: user.id,
-          targetId: newPeer.id,
-          payload: { 
-              id: user.id, 
-              displayName: user.displayName, 
-              avatarConfig: user.avatarConfig, 
-              isMuted: false, 
-              isCameraOff: false,
-              isScreenSharing: !!screenTrackRef.current 
-          }
-        });
-
+        // CRITICAL: Create peer connection FIRST, then send update-state
         createPeerConnection(newPeer.id, true);
+        
+        // Wait a bit for connection to establish, then send state
+        setTimeout(() => {
+          console.log('📤 Sending update-state to new peer:', newPeer.id);
+          sendMessageRef.current?.({
+            type: 'update-state',
+            senderId: user.id,
+            targetId: newPeer.id,
+            payload: { 
+                id: user.id, 
+                displayName: user.displayName, 
+                avatarConfig: user.avatarConfig, 
+                isMuted: false, 
+                isCameraOff: false,
+                isScreenSharing: !!screenTrackRef.current 
+            }
+          });
+        }, 500); // Small delay to ensure connection is ready
       }
 
       if (msg.type === 'update-state') {
@@ -173,7 +177,10 @@ export const useWebRTC = (
   };
 
   const createPeerConnection = useCallback((targetPeerId: string, initiator: boolean) => {
-    if (peerConnections.current.has(targetPeerId)) return peerConnections.current.get(targetPeerId);
+    if (peerConnections.current.has(targetPeerId)) {
+      console.log('🔄 Reusing existing peer connection:', targetPeerId);
+      return peerConnections.current.get(targetPeerId);
+    }
 
     console.log('🔗 Creating peer connection:', targetPeerId, 'initiator:', initiator);
     const pc = new RTCPeerConnection(rtcConfig);
@@ -188,11 +195,11 @@ export const useWebRTC = (
       console.log('🧊 ICE connection state for', targetPeerId, ':', pc.iceConnectionState);
     };
 
-    // Add Tracks (Avatar Stream by default)
+    // CRITICAL: Add tracks IMMEDIATELY when connection is created
     if (localStream) {
-      console.log('🎥 Adding local tracks to peer connection:', localStream.getTracks().length);
+      console.log('🎥 Adding local tracks to NEW peer connection:', localStream.getTracks().length);
       localStream.getTracks().forEach(track => {
-        console.log('📡 Adding track:', track.kind, track.label);
+        console.log('📡 Adding track to NEW peer:', targetPeerId, track.kind, track.label);
         pc.addTrack(track, localStream);
       });
     }
@@ -302,8 +309,12 @@ export const useWebRTC = (
   // --- Main Effect ---
 
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected) {
+      console.log('⏳ Waiting for WebSocket connection...');
+      return;
+    }
 
+    console.log('🚀 Sending join message to room:', roomId);
     // Send join message when connected
     sendMessage({
       type: 'join',
@@ -319,10 +330,13 @@ export const useWebRTC = (
     });
 
     return () => {
+      console.log('👋 Leaving room:', roomId);
       sendMessage({ type: 'leave', senderId: user.id });
       peerConnections.current.forEach(pc => pc.close());
+      peerConnections.current.clear();
+      peerStreams.current.clear();
     };
-  }, [isConnected, user.id, sendMessage]);
+  }, [isConnected, roomId, user.id, sendMessage]);
 
   // Handle local stream updates (Avatar only)
   useEffect(() => {

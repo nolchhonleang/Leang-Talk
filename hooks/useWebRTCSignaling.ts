@@ -45,6 +45,7 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
 
             ws.onopen = () => {
                 console.log('✅ Connected to signaling server - Ready for video calls!');
+                console.log('🏠 Room ID:', roomId, 'User ID:', userId);
                 setIsConnected(true);
                 
                 // Clear any pending reconnection timeout
@@ -56,27 +57,30 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
 
             ws.onmessage = (event) => {
                 try {
-                    const message: SignalMessage = JSON.parse(event.data);
-                    onMessageRef.current?.(message);
+                    const msg = JSON.parse(event.data) as SignalMessage;
+                    console.log('📨 WebSocket message received:', msg.type, 'from:', msg.senderId);
+                    onMessageRef.current?.(msg);
                 } catch (error) {
-                    console.error('Error parsing message:', error);
+                    console.error('❌ Error parsing WebSocket message:', error, 'data:', event.data);
                 }
             };
 
-            ws.onclose = () => {
-                console.log('Disconnected from signaling server');
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
                 setIsConnected(false);
-                
-                // Attempt to reconnect after 3 seconds
-                reconnectTimeoutRef.current = setTimeout(() => {
-                    console.log('Attempting to reconnect...');
-                    connect();
-                }, 3000);
             };
 
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
+            ws.onclose = (event) => {
+                console.log('🔌 WebSocket closed:', event.code, event.reason);
                 setIsConnected(false);
+                
+                // Auto-reconnect after 3 seconds
+                if (!reconnectTimeoutRef.current) {
+                    reconnectTimeoutRef.current = setTimeout(() => {
+                        console.log('🔄 Attempting to reconnect...');
+                        connect();
+                    }, 3000);
+                }
             };
 
         } catch (error) {
