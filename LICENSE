@@ -19,3 +19,32 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## 📄 License Summary
+
+This project is licensed under the MIT License, which means:
+
+✅ **Commercial Use** - You can use this software for commercial purposes
+✅ **Distribution** - You can distribute and modify the software
+✅ **Modification** - You can modify the source code
+✅ **Private Use** - You can use this software privately
+✅ **Sublicensing** - You can sublicense the software
+
+⚠️ **Requirements:**
+- Include the original copyright notice
+- Include the original license text
+- State any significant changes made
+
+## 🌐 Internet Accessibility
+
+This software is designed for **full internet accessibility** with:
+- Cross-device video chat functionality
+- Real-time WebRTC communication
+- WebSocket-based signaling
+- No installation required for users
+
+## 🤝 Contributing
+
+Contributions are welcome under the same MIT license terms.

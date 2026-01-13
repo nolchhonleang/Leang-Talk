@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import express from 'express';
 import { dirname, join } from 'path';
@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocketServer({ server });
 
 // Serve static files from dist directory (for production)
 app.use(express.static(join(__dirname, 'dist')));
@@ -73,7 +73,7 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Leang Talk Server started successfully!`);
     console.log(`📡 WebSocket server running on port ${PORT}`);
-    console.log(`🌐 Ready for cross-device video calls like Zoom!`);
+    console.log(`🌐 Ready for cross-device video calls like meeting!`);
     console.log(`🔗 Local URL: http://localhost:${PORT}`);
     console.log(`📱 Users can now join meetings from anywhere on the internet!`);
 });

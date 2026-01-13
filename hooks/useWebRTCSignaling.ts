@@ -9,7 +9,6 @@ interface UseWebRTCSignalingProps {
 
 export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSignalingProps) => {
     // Always use WebSocket for full multi-user functionality
-    // No more fallback mode - we want Zoom-like experience
 
     // Original WebSocket implementation for development
     const [isConnected, setIsConnected] = useState(false);
@@ -38,7 +37,7 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
         }
             
         console.log('🔗 Connecting to WebSocket:', wsUrl);
-        console.log('🌐 This will enable cross-device video calls like Zoom!');
+        console.log('🌐 This will enable cross-device video calls like Meeting!');
         
         try {
             const ws = new WebSocket(wsUrl);
