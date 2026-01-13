@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { SignalMessage } from '../types';
-import { useWebRTCSignalingFallback } from './useWebRTCSignalingFallback';
 
 interface UseWebRTCSignalingProps {
     roomId: string;
@@ -9,16 +8,8 @@ interface UseWebRTCSignalingProps {
 }
 
 export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSignalingProps) => {
-    // Check if we're in a static deployment (GitHub Pages, Netlify, etc.)
-    const isStaticDeployment = !window.location.hostname.includes('localhost') && 
-                             !window.location.hostname.includes('127.0.0.1') &&
-                             !window.location.hostname.includes('0.0.0.0');
-    
-    // Use fallback signaling for static deployments
-    if (isStaticDeployment) {
-        console.log('Using fallback signaling for static deployment');
-        return useWebRTCSignalingFallback({ roomId, userId, onMessage });
-    }
+    // Always use WebSocket for full multi-user functionality
+    // No more fallback mode - we want Zoom-like experience
 
     // Original WebSocket implementation for development
     const [isConnected, setIsConnected] = useState(false);
@@ -32,17 +23,29 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
     }, [onMessage]);
 
     const connect = () => {
-        // Connect to WebSocket server (works for both local and Render deployment)
-        const wsUrl = window.location.protocol === 'https:' 
-            ? `wss://${window.location.host}` 
-            : `ws://${window.location.host}`;
+        // Universal WebSocket URL that works everywhere
+        let wsUrl;
+        
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Local development
+            wsUrl = `ws://localhost:3001`;
+        } else if (window.location.protocol === 'https:') {
+            // Production with HTTPS
+            wsUrl = `wss://${window.location.host}`;
+        } else {
+            // Production with HTTP
+            wsUrl = `ws://${window.location.host}`;
+        }
             
+        console.log('🔗 Connecting to WebSocket:', wsUrl);
+        console.log('🌐 This will enable cross-device video calls like Zoom!');
+        
         try {
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
 
             ws.onopen = () => {
-                console.log('Connected to signaling server');
+                console.log('✅ Connected to signaling server - Ready for video calls!');
                 setIsConnected(true);
                 
                 // Clear any pending reconnection timeout

@@ -6,11 +6,11 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-green?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=for-the-badge)
 
-**A cutting-edge video chat application with real-time avatar customization and advanced face tracking**
+**A Zoom-like video chat application with real-time avatar customization and cross-device multi-user support**
 
 *Created by [Nol Chhonleang](https://github.com/nolchhonleang)*
 
-[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=for-the-badge)](http://localhost:3000)
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=for-the-badge)](https://leang-talk.onrender.com)
 [![Report Bug](https://img.shields.io/badge/report-bug-red?style=for-the-badge)](https://github.com/nolchhonleang/leang-talk/issues)
 [![Request Feature](https://img.shields.io/badge/request-feature-blue?style=for-the-badge)](https://github.com/nolchhonleang/leang-talk/issues)
 
@@ -19,25 +19,29 @@
 ## 🌟 Features
 
 ### 🎯 Core Functionality
-- **🔴 Real-time Video Chat** - Seamless WebRTC-based video communication
-- **🎭 Avatar Customization** - Multiple avatar styles with extensive personalization options
-- **👁️ Face Tracking** - Advanced MediaPipe-powered facial landmark detection
+- **🔴 Multi-User Video Chat** - Real-time WebRTC communication across devices (like Zoom!)
+- **🎭 Avatar Customization** - 12 avatar styles with extensive personalization
+- **👁️ Face Tracking** - MediaPipe-powered facial landmark detection
+- **📺 Screen Sharing** - Share your screen with other participants
+- **💬 Real-time Chat** - Instant messaging during video calls
+- **😊 Reactions** - Express yourself with emoji reactions
 - **🌙 Dark Mode** - Beautiful dark/light theme toggle
-- **📱 Responsive Design** - Optimized for all devices and screen sizes
+- **📱 Responsive Design** - Optimized for all devices
 
 ### 🛠️ Technical Features
-- **⚡ High Performance** - Built with React 19 and Vite for lightning-fast development
+- **⚡ High Performance** - Built with React 19 and Vite
 - **🎨 Modern UI** - Beautiful animations with Framer Motion
-- **🔧 TypeScript** - Full type safety and better developer experience
+- **🔧 TypeScript** - Full type safety
 - **🎯 State Management** - Efficient state handling with Zustand
-- **🎭 Component Library** - Heroicons for consistent iconography
+- **� WebSocket Signaling** - Real-time signaling server for cross-device support
+- **🔒 Secure Connections** - HTTPS/WSS support
+- **🔄 Auto-Reconnection** - Automatic reconnection on network issues
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
 - **Node.js** 18.0.0 or higher
-- **npm** or **yarn** package manager
+- **npm** package manager
 - **Modern web browser** with WebRTC support
 
 ### Installation
@@ -53,57 +57,57 @@
    npm install
    ```
 
-3. **Start development server**
+3. **Run the application**
    ```bash
-   npm run dev
+   npm start
    ```
 
 4. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3001](http://localhost:3001)
 
-## 📦 Available Scripts
+## 🌐 Deployment
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build locally |
+### 🥇 Recommended: Render (Full Zoom-like Experience)
+Deploy everything on Render for complete cross-device functionality:
 
-## � Deployment
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Ready for Render deployment"
+   git push origin main
+   ```
+
+2. **Deploy to Render**
+   - Go to [render.com](https://render.com)
+   - Create Web Service
+   - Connect: `nolchhonleang/Leang-Talk`
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm start`
+
+✅ **Full multi-user support across all devices - just like Zoom!**
 
 ### Development (Local)
 ```bash
 npm install
 npm start
 ```
-This runs both the WebSocket server (port 3001) and Vite dev server (port 3000)
-
-### Static Deployment (GitHub Pages, Netlify, Vercel)
-
-**Important Note:** Static hosting services don't support WebSocket servers, so multi-user functionality requires a signaling server.
-
-#### Option 1: Deploy Signaling Server Separately
-1. Deploy the WebSocket server to Render/Heroku:
-   ```bash
-   # Deploy server.js to a service that supports Node.js
-   # Update the WebSocket URL in useWebRTCSignaling.ts
-   ```
-
-#### Option 2: Use Fallback Mode (Limited)
-The app automatically falls back to localStorage-based signaling for static deployments, which works for:
-- ✅ Same browser, multiple tabs
-- ❌ Different devices/users over the internet
-
-#### Option 3: Full Production Setup
-For full multi-user functionality, deploy both:
-- **Frontend:** Vercel/Netlify/GitHub Pages
-- **Backend:** Render/Heroku/Railway (WebSocket server)
+Runs both WebSocket server (port 3001) and serves the frontend.
 
 ### Environment Variables
 - `NODE_ENV=production` - Enables production mode
-- WebSocket URL is automatically configured based on deployment type
+- WebSocket URL automatically configured based on deployment
 
-## �🏗️ Project Structure
+## 📦 Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm start` | Start production server (frontend + WebSocket) |
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build locally |
+| `npm run server` | Start WebSocket server only |
+
+## 🏗️ Project Structure
 
 ```
 leang-talk/
@@ -112,117 +116,107 @@ leang-talk/
 │   └── VideoRoom.tsx        # Video chat room component
 ├── hooks/              # Custom React hooks
 │   ├── useFaceLandmarker.ts # Face tracking logic
-│   └── useWebRTC.ts         # WebRTC functionality
-├── utils/              # Utility functions
-│   ├── avatarDrawer.ts      # Avatar rendering
-│   └── avatarRenderer.ts    # Avatar animation
-├── store/              # State management
-│   └── useStore.ts          # Global application state
+│   ├── useWebRTC.ts         # WebRTC functionality
+│   └── useWebRTCSignaling.ts # WebSocket signaling
+├── server.js           # WebSocket server + static file serving
 ├── types.ts            # TypeScript type definitions
-├── App.tsx             # Main application component
-├── index.tsx           # Application entry point
-└── index.html          # HTML template
+└── public/             # Static assets
 ```
 
-## 🎨 Avatar Customization
+## 🔧 Technical Architecture
 
-Choose from a variety of avatar styles and personalize your virtual presence:
+### WebRTC Signaling
+- **Development:** WebSocket server for real-time communication
+- **Production:** Same WebSocket server deployed with frontend
+- **Cross-Device:** Full support across different devices and browsers
 
-- **🐱 Cat Avatars** - Cute and playful feline characters
-- **🐻 Bear Avatars** - Friendly and warm bear characters  
-- **🦊 Fox Avatars** - Clever and charming fox characters
-- **🐼 Panda Avatars** - Adorable and gentle panda characters
+### Avatar System
+- **12 Avatar Styles:** Cat, Dog, Bear, Rabbit, Fox, Panda, Unicorn, Koala, Tiger, Lion, Pig
+- **Customization:** Colors, accessories (glasses, hats, bows, etc.)
+- **Face Tracking:** MediaPipe integration for real-time avatar movement
 
-### Customization Options
-- **Colors**: Multiple color schemes for each avatar type
-- **Accessories**: Hats, glasses, and other fun accessories
-- **Expressions**: Dynamic facial expressions based on face tracking
+### Real-time Features
+- **Video/Audio:** WebRTC peer-to-peer connections
+- **Screen Sharing:** WebRTC display capture API
+- **Chat:** WebSocket-based instant messaging
+- **Reactions:** Real-time emoji sharing
 
-## 🔧 Technology Stack
+## �️ Technologies Used
 
 ### Frontend
-- **React 19** - Modern React with latest features
+- **React 19** - Modern React with concurrent features
 - **TypeScript** - Type-safe JavaScript
-- **Vite** - Fast build tool and development server
+- **Vite** - Fast build tool and dev server
+- **Framer Motion** - Smooth animations
 - **Tailwind CSS** - Utility-first CSS framework
-
-### Libraries & Tools
-- **Framer Motion** - Smooth animations and transitions
 - **Zustand** - Lightweight state management
 - **Heroicons** - Beautiful SVG icons
-- **MediaPipe** - Face detection and tracking
-- **WebRTC** - Real-time video communication
 
-## 🌐 Browser Support
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express** - Web framework
+- **WebSocket (ws)** - Real-time communication
+- **MediaPipe** - Face tracking library
 
-| Browser | Version | Support |
-|---------|---------|---------|
-| Chrome | 90+ | ✅ Full Support |
-| Firefox | 88+ | ✅ Full Support |
-| Safari | 14+ | ✅ Full Support |
-| Edge | 90+ | ✅ Full Support |
+### Development Tools
+- **ESLint** - Code linting
+- **TypeScript** - Static type checking
+- **Vite** - Hot module replacement
+
+## 🎯 How It Works (Like Zoom)
+
+### 1. **Room Creation**
+- User creates or joins a room with a unique ID
+- WebSocket server manages room participants
+
+### 2. **Signaling Process**
+- Users exchange WebRTC offer/answer via WebSocket
+- ICE candidates are shared for NAT traversal
+
+### 3. **Peer Connection**
+- Direct WebRTC connections established between participants
+- Real-time video/audio flows peer-to-peer
+
+### 4. **Features**
+- Screen sharing, chat, reactions all work via WebSocket + WebRTC
+- Face tracking controls avatar animations in real-time
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
+Contributions are what make the open-source community amazing! Here's how you can contribute:
 
-1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/AmazingFeature`)
-3. **Commit your changes** (`git commit -m 'Add some AmazingFeature'`)
-4. **Push to the branch** (`git push origin feature/AmazingFeature`)
+1. **Fork the Project**
+2. **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
+3. **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
+4. **Push to the Branch** (`git push origin feature/AmazingFeature`)
 5. **Open a Pull Request**
 
-### Development Guidelines
-
-- Follow the existing code style and conventions
-- Write meaningful commit messages
-- Add tests for new features
-- Update documentation as needed
-
-## 📝 Roadmap
-
-- [ ] **Multi-user Rooms** - Support for group video chats
-- [ ] **Screen Sharing** - Share your screen with others
-- [ ] **Recording Feature** - Record video conversations
-- [ ] **Mobile App** - Native mobile applications
-- [ ] **AI Avatars** - AI-powered avatar generation
-- [ ] **Voice Effects** - Real-time voice modulation
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Q: Camera not working?**
-A: Ensure you've granted camera permissions in your browser settings.
-
-**Q: Face tracking not working?**
-A: Make sure you're in a well-lit environment and your face is clearly visible.
-
-**Q: Build fails?**
-A: Try clearing the node_modules folder and reinstalling dependencies.
-
-
-## 📄 License
+## � License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **MediaPipe Team** - For the amazing face tracking technology
-- **React Community** - For the incredible ecosystem and tools
-- **Tailwind CSS** - For the utility-first CSS framework
-- **All Contributors** - Everyone who has contributed to this project
+- **React Team** - For the amazing React framework
+- **MediaPipe Team** - For the face tracking technology
+- **WebRTC Community** - For real-time communication standards
+- **Zoom Team** - For inspiring the video chat experience
+
+## 📞 Support
+
+If you have any questions or need help:
+
+- 📧 **Email:** [nolchhonleang@example.com](mailto:nolchhonleang@example.com)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/nolchhonleang/leang-talk/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/nolchhonleang/leang-talk/discussions)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by [Nol Chhonleang](https://github.com/nolchhonleang)**
+**⭐ Star this repo if it helped you!**
 
-[![GitHub followers](https://img.shields.io/github/followers/nolchhonleang?style=social)](https://github.com/nolchhonleang)
-[![GitHub stars](https://img.shields.io/github/stars/nolchhonleang/leang-talk?style=social)](https://github.com/nolchhonleang/leang-talk)
+Made with ❤️ by [Nol Chhonleang](https://github.com/nolchhonleang)
 
 </div>
-<img width="1918" height="1011" alt="image" src="https://github.com/user-attachments/assets/e75f7a2d-5d20-415c-a349-7cbb251d12af" />
-<img width="1917" height="1015" alt="image" src="https://github.com/user-attachments/assets/8cda8c46-dec4-431e-aba2-3a294035132f" />
 
