@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import express from 'express';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,14 +13,20 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Serve static files from dist directory (for production)
-app.use(express.static(join(__dirname, 'dist')));
-
-// For development, serve from public directory
-app.use(express.static(join(__dirname, 'public')));
+if (existsSync(join(__dirname, 'dist'))) {
+  app.use(express.static(join(__dirname, 'dist')));
+  console.log('📁 Serving from dist directory');
+} else {
+  app.use(express.static(join(__dirname)));
+  console.log('📁 Serving from root directory');
+}
 
 // Serve index.html for all routes (SPA)
 app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, 'dist', 'index.html'));
+  const indexPath = existsSync(join(__dirname, 'dist', 'index.html')) 
+    ? join(__dirname, 'dist', 'index.html')
+    : join(__dirname, 'index.html');
+  res.sendFile(indexPath);
 });
 
 // Store rooms and their clients
