@@ -1,21 +1,25 @@
-const WebSocket = require('ws');
-const http = require('http');
-const express = require('express');
-const path = require('path');
+import WebSocket from 'ws';
+import { createServer } from 'http';
+import express from 'express';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // Serve static files from dist directory (for production)
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(join(__dirname, 'dist')));
 
 // For development, serve from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(join(__dirname, 'public')));
 
 // Serve index.html for all routes (SPA)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
 // Store rooms and their clients
