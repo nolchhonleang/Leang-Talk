@@ -93,7 +93,8 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             const messageWithRoom = {
                 ...message,
-                roomId
+                roomId,
+                timestamp: Date.now() // Add timestamp for security
             };
             wsRef.current.send(JSON.stringify(messageWithRoom));
         } else {

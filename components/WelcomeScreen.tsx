@@ -110,8 +110,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onJoin }) => {
       if (hash) {
           setJoinMode('join');
           setRoomCode(hash);
+      } else {
+          // Default to create mode for instant meetings
+          setJoinMode('create');
       }
-      // Don't auto-set to create mode - let user choose
       
       if (savedUser?.theme === 'dark' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           setIsDarkMode(true);
@@ -206,13 +208,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onJoin }) => {
         return;
     }
 
-    // Always require room code - no auto-generation
-    if (!roomCode.trim()) {
-        alert("Please enter a Room Code to create or join a meeting!");
-        return;
+    let finalRoomId;
+    if (joinMode === 'join') {
+        // Join mode: Require room code
+        if (!roomCode.trim()) {
+            alert("Please enter a Room Code to join the meeting!");
+            return;
+        }
+        finalRoomId = roomCode.trim();
+    } else {
+        // Create mode: Auto-generate room code
+        finalRoomId = Math.random().toString(36).substring(7);
     }
-
-    const finalRoomId = roomCode.trim();
 
     const newUser: UserSettings = {
         id: Math.random().toString(36),
@@ -442,25 +449,34 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onJoin }) => {
                         onClick={() => setJoinMode('create')}
                         className={clsx("pb-1 font-bold transition-colors border-b-2 text-sm sm:text-base flex-1 text-center", joinMode === 'create' ? "border-brand-500 text-brand-600" : "border-transparent text-slate-400")}
                     >
-                        Create Meeting
+                        Start Instant Meeting
                     </button>
                     <button
                         onClick={() => setJoinMode('join')}
                         className={clsx("pb-1 font-bold transition-colors border-b-2 text-sm sm:text-base flex-1 text-center", joinMode === 'join' ? "border-brand-500 text-brand-600" : "border-transparent text-slate-400")}
                     >
-                        Join Meeting
+                        Join with Code
                     </button>
                 </div>
 
-                {/* Room Code Input - Always Visible */}
-                <div className="mb-3 sm:mb-4">
-                    <input 
-                       value={roomCode}
-                       onChange={(e) => setRoomCode(e.target.value)}
-                       placeholder="Enter Room Code (e.g. meeting-123)"
-                       className="w-full px-4 sm:px-5 py-2 sm:py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 focus:border-brand-500 focus:outline-none text-base font-bold text-slate-800 dark:text-white"
-                    />
-                </div>
+                {/* Room Code Input - Only show in join mode */}
+                <AnimatePresence mode="wait">
+                    {joinMode === 'join' && (
+                         <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="mb-3 sm:mb-4 overflow-hidden"
+                         >
+                            <input 
+                               value={roomCode}
+                               onChange={(e) => setRoomCode(e.target.value)}
+                               placeholder="Enter Room Code (e.g. meeting-123)"
+                               className="w-full px-4 sm:px-5 py-2 sm:py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-600 focus:border-brand-500 focus:outline-none text-base font-bold text-slate-800 dark:text-white"
+                            />
+                         </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <button 
                     onClick={handleSubmit}

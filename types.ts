@@ -58,6 +58,7 @@ export interface SignalMessage {
   senderId: string;
   targetId?: string;
   payload?: any;
+  timestamp?: number; // Add timestamp for security
 }
 
 export interface FaceLandmarkerResult {

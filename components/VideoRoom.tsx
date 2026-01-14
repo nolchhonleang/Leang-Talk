@@ -85,6 +85,15 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
     const joinAudioRef = useRef(new Audio(JOIN_SOUND));
     const chatAudioRef = useRef(new Audio(CHAT_SOUND));
 
+    const copyMeetingLink = () => {
+        const meetingLink = `${window.location.origin}${window.location.pathname}#${roomId}`;
+        navigator.clipboard.writeText(meetingLink).then(() => {
+            addToast('Meeting link copied!', 'info');
+        }).catch(() => {
+            addToast('Failed to copy link', 'info');
+        });
+    };
+
     const addToast = (msg: string, type: 'info' | 'chat') => {
         const id = Date.now();
         setToasts(prev => [...prev, {id, msg, type}]);
@@ -248,10 +257,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
     };
 
     const handleShare = () => {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        copyMeetingLink();
     };
 
     const toggleTheme = () => {
