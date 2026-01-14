@@ -115,15 +115,24 @@ export const useWebRTC = (
       }
 
       if (msg.targetId === user.id) {
+        console.log('🎯 Received targeted message for me from:', msg.senderId);
         const pc = peerConnections.current.get(msg.senderId) || createPeerConnection(msg.senderId, false);
 
         if (msg.type === 'offer' && pc) {
+          console.log('📨 Received offer, creating answer...');
           pc.setRemoteDescription(new RTCSessionDescription(msg.payload))
-            .then(() => pc.createAnswer())
-            .then(answer => pc.setLocalDescription(answer))
+            .then(() => {
+              console.log('✅ Remote description set, creating answer...');
+              return pc.createAnswer();
+            })
+            .then(answer => {
+              console.log('✅ Answer created, setting local description...');
+              return pc.setLocalDescription(answer);
+            })
             .then(() => {
               const localDesc = pc.localDescription;
               if (localDesc) {
+                console.log('📤 Sending answer to:', msg.senderId);
                 sendMessageRef.current?.({
                   type: 'answer',
                   senderId: user.id,
@@ -133,12 +142,23 @@ export const useWebRTC = (
               }
             })
             .catch(error => {
-              console.error('Error handling offer:', error);
+              console.error('❌ Error handling offer:', error);
             });
         } else if (msg.type === 'answer' && pc) {
-          pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+          console.log('📨 Received answer, setting remote description...');
+          pc.setRemoteDescription(new RTCSessionDescription(msg.payload))
+            .then(() => {
+              console.log('✅ Answer set - connection should be established');
+            })
+            .catch(error => {
+              console.error('❌ Error handling answer:', error);
+            });
         } else if (msg.type === 'ice-candidate' && pc) {
-          pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+          console.log('🧊 Adding ICE candidate from:', msg.senderId);
+          pc.addIceCandidate(new RTCIceCandidate(msg.payload))
+            .catch(error => {
+              console.error('❌ Error adding ICE candidate:', error);
+            });
         }
       }
   }, [user.id, options]);
