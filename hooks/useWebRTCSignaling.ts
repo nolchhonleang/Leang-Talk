@@ -22,22 +22,18 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
     }, [onMessage]);
 
     const connect = () => {
-        // Universal WebSocket URL that works everywhere
-        let wsUrl;
-        
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            // Local development
-            wsUrl = `ws://localhost:3001`;
-        } else if (window.location.protocol === 'https:') {
-            // Production with HTTPS
-            wsUrl = `wss://${window.location.host}`;
-        } else {
-            // Production with HTTP
-            wsUrl = `ws://${window.location.host}`;
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            console.log('🔄 Already connected');
+            return;
         }
+
+        // Determine WebSocket URL based on environment
+        const wsUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? `ws://localhost:3001` 
+            : `wss://${window.location.hostname}`;
             
-        console.log('🔗 Connecting to WebSocket:', wsUrl);
-        console.log('🌐 This will enable cross-device video calls like Meeting!');
+        console.log('🌐 Connecting to WebSocket server:', wsUrl);
+        console.log('🏠 This will enable cross-device video calls like Meeting!');
         
         try {
             const ws = new WebSocket(wsUrl);
@@ -58,7 +54,7 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
             ws.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data) as SignalMessage;
-                    console.log('📨 WebSocket message received:', msg.type, 'from:', msg.senderId);
+                    console.log('📨 WebSocket message received:', msg.type, 'from:', msg.senderId, 'room:', msg.roomId);
                     onMessageRef.current?.(msg);
                 } catch (error) {
                     console.error('❌ Error parsing WebSocket message:', error, 'data:', event.data);
@@ -67,6 +63,8 @@ export const useWebRTCSignaling = ({ roomId, userId, onMessage }: UseWebRTCSigna
 
             ws.onerror = (error) => {
                 console.error('❌ WebSocket error:', error);
+                console.error('❌ WebSocket state:', ws.readyState);
+                console.error('❌ WebSocket URL:', wsUrl);
                 setIsConnected(false);
             };
 

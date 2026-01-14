@@ -9,14 +9,14 @@ function App() {
 
   // Handle URL Hash for Room ID
   useEffect(() => {
-     const hash = window.location.hash.replace('#/', '');
+     const hash = window.location.hash.replace('#', '');
      if (hash) {
          setRoomId(hash);
      } else {
          // Auto-generate room ID for instant meetings
          const newRoomId = Math.random().toString(36).substring(7);
          setRoomId(newRoomId);
-         window.location.hash = '/' + newRoomId;
+         window.location.hash = '#' + newRoomId;
      }
   }, []);
 

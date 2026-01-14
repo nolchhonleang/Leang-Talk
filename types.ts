@@ -59,6 +59,7 @@ export interface SignalMessage {
   targetId?: string;
   payload?: any;
   timestamp?: number; // Add timestamp for security
+  roomId?: string; // Add roomId for proper routing
 }
 
 export interface FaceLandmarkerResult {

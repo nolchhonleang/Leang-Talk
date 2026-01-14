@@ -106,7 +106,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onJoin }) => {
 
   // Initialize
   useEffect(() => {
-      const hash = window.location.hash.replace('#/', '');
+      const hash = window.location.hash.replace('#', '');
       if (hash) {
           setJoinMode('join');
           setRoomCode(hash);
