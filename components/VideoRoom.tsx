@@ -164,10 +164,17 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
                 }
 
                 if (sourceCanvasRef.current) {
+                    // Ensure canvas has proper dimensions
+                    if (sourceCanvasRef.current.width !== 640) {
+                        sourceCanvasRef.current.width = 640;
+                        sourceCanvasRef.current.height = 480;
+                    }
+                    
                     const canvasStream = sourceCanvasRef.current.captureStream(30);
                     // Add the audio track to the canvas stream so it's sent over WebRTC
                     mediaStream.getAudioTracks().forEach(t => canvasStream.addTrack(t));
                     setLocalStream(canvasStream);
+                    console.log('🎥 Canvas stream created:', canvasStream.getTracks().length, 'tracks');
                 }
             } catch (e) { console.error("Media Init Error", e); }
         };
@@ -410,13 +417,6 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
                              {peers.filter(p => p.id !== focusedId).map(peer => (
                                  <div key={peer.id} className="min-w-[160px] md:w-full flex-shrink-0 aspect-video rounded-xl overflow-hidden shadow-md ring-1 ring-black/5 dark:ring-white/10">
                                     <VideoTile name={peer.displayName} stream={peer.stream} isMuted={peer.isMuted} isScreenSharing={peer.isScreenSharing} onClick={() => setFocusedId(peer.id)} />
-                                    <button
-                                        onClick={() => requestToJoinMeeting(peer.id)}
-                                        className="absolute top-2 right-2 bg-brand-500 text-white p-1.5 rounded-full text-xs hover:bg-brand-600 transition-colors shadow-lg"
-                                        title="Request to join this user's meeting"
-                                    >
-                                        <UserPlusIcon className="w-3 h-3" />
-                                    </button>
                                  </div>
                              ))}
                          </div>

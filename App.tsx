@@ -12,11 +12,8 @@ function App() {
      const hash = window.location.hash.replace('#/', '');
      if (hash) {
          setRoomId(hash);
-     } else {
-         const newRoomId = Math.random().toString(36).substring(7);
-         setRoomId(newRoomId);
-         window.location.hash = '/' + newRoomId;
      }
+     // Don't auto-generate room ID - let user input their own
   }, []);
 
   const handleJoin = (settings: UserSettings) => {
