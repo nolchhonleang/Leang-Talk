@@ -34,7 +34,7 @@ const rooms = new Map();
 const clientInfo = new Map(); // Store client metadata
 
 wss.on('connection', (ws) => {
-    console.log('New client connected');
+    console.log('🔌 New client connected');
     let currentRoomId = null;
     
     ws.on('message', (data) => {
@@ -52,18 +52,22 @@ wss.on('connection', (ws) => {
                     console.log('🏠 Created new room:', message.roomId);
                 }
                 const room = rooms.get(message.roomId);
-                room.add(ws);
                 
-                // Store client info
-                clientInfo.set(ws, {
-                    roomId: message.roomId,
-                    userId: message.senderId,
-                    displayName: message.payload?.displayName || 'Unknown'
-                });
+                // For join messages, add client to room
+                if (message.type === 'join') {
+                    room.add(ws);
+                    
+                    // Store client info
+                    clientInfo.set(ws, {
+                        roomId: message.roomId,
+                        userId: message.senderId,
+                        displayName: message.payload?.displayName || 'Unknown'
+                    });
+                    
+                    console.log('👥 Room', message.roomId, 'now has', room.size, 'clients');
+                }
                 
-                console.log('👥 Room', message.roomId, 'now has', room.size, 'clients');
-                
-                // Broadcast message to all clients in room except sender
+                // Broadcast message to all clients in room
                 room.forEach(client => {
                     if (client !== ws && client.readyState === WebSocket.OPEN) {
                         // For targeted messages (offer/answer/ice), only send to specific target
@@ -74,20 +78,20 @@ wss.on('connection', (ws) => {
                                 client.send(JSON.stringify(message));
                             }
                         } else {
-                            // For broadcast messages (join/leave/update-state), send to all
-                            console.log('📤 Broadcasting message to client in room:', message.roomId);
+                            // For broadcast messages (join/leave/update-state/chat/reaction), send to all
+                            console.log('📤 Broadcasting message to room:', message.roomId);
                             client.send(JSON.stringify(message));
                         }
                     }
                 });
             }
         } catch (error) {
-            console.error('Error processing message:', error);
+            console.error('❌ Error processing message:', error);
         }
     });
     
     ws.on('close', () => {
-        console.log('Client disconnected');
+        console.log('🔌 Client disconnected');
         const info = clientInfo.get(ws);
         if (info && info.roomId) {
             const room = rooms.get(info.roomId);
@@ -95,7 +99,7 @@ wss.on('connection', (ws) => {
                 room.delete(ws);
                 console.log('👋 Client left room', info.roomId, 'remaining:', room.size);
                 
-                // Notify other clients in the room
+                // Notify other clients in room
                 const leaveMessage = {
                     type: 'leave',
                     senderId: info.userId,
@@ -120,7 +124,7 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
     });
 });
 

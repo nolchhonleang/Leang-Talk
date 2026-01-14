@@ -86,7 +86,7 @@ export const useWebRTC = (
                 isScreenSharing: !!screenTrackRef.current 
             }
           });
-        }, 500); // Small delay to ensure connection is ready
+        }, 100); // Reduced delay for faster connection
       }
 
       if (msg.type === 'update-state') {
