@@ -22,14 +22,16 @@ export const useWebRTC = (
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
   const sendMessageRef = useRef<(msg: SignalMessage) => void>();
 
-  // STUN config for real connectivity
+  // STUN config for real connectivity with multiple fallback servers
   const rtcConfig = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' }
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:stun.stunprotocol.org:3478' },
+      { urls: 'stun:stun.l.google.com:19302' }
     ]
   };
 
@@ -186,13 +188,30 @@ export const useWebRTC = (
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnections.current.set(targetPeerId, pc);
 
-    // Add connection state logging
+    // Add connection state logging with retry logic
     pc.onconnectionstatechange = () => {
       console.log('🔗 Connection state for', targetPeerId, ':', pc.connectionState);
+      
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        console.log('❌ Connection failed, retrying...');
+        // Retry connection after delay
+        setTimeout(() => {
+          if (peerConnections.current.has(targetPeerId)) {
+            peerConnections.current.delete(targetPeerId);
+            createPeerConnection(targetPeerId, initiator);
+          }
+        }, 2000);
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log('🧊 ICE connection state for', targetPeerId, ':', pc.iceConnectionState);
+      
+      if (pc.iceConnectionState === 'failed') {
+        console.log('❌ ICE connection failed, retrying...');
+        // Restart ICE gathering
+        pc.restartIce();
+      }
     };
 
     // CRITICAL: Add tracks IMMEDIATELY when connection is created
