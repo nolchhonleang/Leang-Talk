@@ -377,34 +377,38 @@ export const useWebRTC = (
   // --- Main Effect ---
 
   useEffect(() => {
-    if (!isConnected) {
-      console.log('⏳ Waiting for WebSocket connection...');
+    if (!isConnected || !localStream) {
+      console.log('⏳ Waiting for WebSocket connection and local stream...', { isConnected, hasStream: !!localStream });
       return;
     }
 
-    console.log('🚀 Sending join message to room:', roomId);
-    // Send join message when connected
-    sendMessage({
-      type: 'join',
-      senderId: user.id,
-      payload: { 
-          id: user.id, 
-          displayName: user.displayName, 
-          avatarConfig: user.avatarConfig, 
-          isMuted: false, 
-          isCameraOff: false,
-          isScreenSharing: false 
-      }
-    });
+    // Small delay to ensure everything is ready
+    const timer = setTimeout(() => {
+      console.log('🚀 Sending join message to room:', roomId);
+      // Send join message when connected
+      sendMessage({
+        type: 'join',
+        senderId: user.id,
+        payload: { 
+            id: user.id, 
+            displayName: user.displayName, 
+            avatarConfig: user.avatarConfig, 
+            isMuted: false, 
+            isCameraOff: false,
+            isScreenSharing: false 
+        }
+      });
+    }, 500);
 
     return () => {
+      clearTimeout(timer);
       console.log('👋 Leaving room:', roomId);
       sendMessage({ type: 'leave', senderId: user.id });
       peerConnections.current.forEach(pc => pc.close());
       peerConnections.current.clear();
       peerStreams.current.clear();
     };
-  }, [isConnected, roomId, user.id, sendMessage]);
+  }, [isConnected, roomId, user.id, localStream, sendMessage]);
 
   // Handle local stream updates (Avatar only)
   useEffect(() => {
