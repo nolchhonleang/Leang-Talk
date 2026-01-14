@@ -100,7 +100,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
     };
     
-    const { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare, requestToJoinMeeting } = useWebRTC(
+    const { peers, chatMessages, reactions, sendChat, sendReaction, startScreenShare, stopScreenShare } = useWebRTC(
         roomId!, 
         user!, 
         localStream,
@@ -113,15 +113,6 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ user, roomId, onLeave }) => {
                 if (!showChat) {
                     chatAudioRef.current.play().catch(() => {});
                     addToast(`Msg: ${msg.senderName}`, 'chat');
-                }
-            },
-            onMeetingRequest: (requesterId: string, requesterName: string, accept: () => void, reject: () => void) => {
-                // Show meeting request dialog
-                const shouldAccept = window.confirm(`${requesterName} wants to join your meeting. Accept?`);
-                if (shouldAccept) {
-                    accept();
-                } else {
-                    reject();
                 }
             }
         }
